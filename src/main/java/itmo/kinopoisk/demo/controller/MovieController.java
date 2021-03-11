@@ -1,5 +1,7 @@
 package itmo.kinopoisk.demo.controller;
 
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import itmo.kinopoisk.demo.entities.Movie;
 import itmo.kinopoisk.demo.services.MovieService;
 import itmo.kinopoisk.demo.services.UserService;
@@ -24,13 +26,15 @@ public class MovieController {
     @Autowired
     private UserService userService;
 
+
+    @ApiOperation(value = "${MovieController.getMovieList}")
     @RequestMapping(value = "movielist",
             method = RequestMethod.GET,
             produces = {MimeTypeUtils.APPLICATION_JSON_VALUE},
             headers = "Accept=application/json")
-    public ResponseEntity<Iterable<Movie>> getMovieList(@RequestParam(value = "genre") Optional<String> genre,
-                                                        @RequestParam(value = "year") Optional<Integer> year,
-                                                        @RequestParam(value = "country") Optional<String> country) {
+    public ResponseEntity<Iterable<Movie>> getMovieList(@ApiParam("genre")   @RequestParam(value = "genre") Optional<String> genre,
+                                                        @ApiParam("year")    @RequestParam(value = "year") Optional<Integer> year,
+                                                        @ApiParam("country") @RequestParam(value = "country") Optional<String> country) {
         try {
             return new ResponseEntity<>(movieService.getAllMovies(genre, year, country), HttpStatus.OK);
         } catch (Exception e) {
@@ -38,34 +42,43 @@ public class MovieController {
         }
     }
 
+
+    @ApiOperation(value = "${MovieController.rateMovie}")
     @RequestMapping(value = "ratemovie",
             method = RequestMethod.POST,
             produces = {MimeTypeUtils.APPLICATION_JSON_VALUE},
             headers = "Accept=application/json")
-    public ResponseEntity<Movie> rateMovie(@RequestParam(value = "rate") double currRate, @RequestParam(value = "id") int movieId) {
+    public ResponseEntity<Movie> rateMovie(@ApiParam("currRate") Optional<Double> currRate, @ApiParam("movieId") Optional<Integer> movieId) {
+        if(!movieId.isPresent())
+            return new ResponseEntity("MovieId is required!", HttpStatus.BAD_REQUEST);
 
-        if (currRate > 10)
+        if(!currRate.isPresent())
+            return new ResponseEntity("currRate is required!", HttpStatus.BAD_REQUEST);
+
+        if (currRate.get() > 10)
             return new ResponseEntity("Rate can't be more than 10", HttpStatus.BAD_REQUEST);
 
-        movieService.changeRaitById(movieId, currRate);
+        movieService.changeRaitById(movieId.get(), currRate.get());
 
         try {
-            return new ResponseEntity<>(movieService.getMovieById(movieId), HttpStatus.OK);
+            return new ResponseEntity<>(movieService.getMovieById(movieId.get()), HttpStatus.OK);
         } catch (Exception ex) {
             return new ResponseEntity("Something went wrong", HttpStatus.BAD_REQUEST);
         }
     }
 
+
+    @ApiOperation(value = "${MovieController.watchMovie}")
     @RequestMapping(value = "watchmovie",
             method = RequestMethod.POST,
             produces = {MimeTypeUtils.APPLICATION_JSON_VALUE},
             headers = "Accept=application/json")
-    public ResponseEntity<String> watchMovie(Optional<Integer> movieId, Optional<String> login) {
+    public ResponseEntity<String> watchMovie(@ApiParam("movieId") Optional<Integer> movieId, @ApiParam("login") Optional<String> login) {
         if (!movieId.isPresent())
             return new ResponseEntity<String>("MovieId is required!", HttpStatus.BAD_REQUEST);
 
         if(!login.isPresent())
-            return new ResponseEntity<String>("Login is required!", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<String>("Login is required!", HttpStatus.BAD_REQUEST);
 
         if (userService.getByLogin(login.get()).isSubed() || movieService.getMovieById(movieId.get()).isFree())
             return new ResponseEntity<String>(movieService.getMovieDesc(movieId.get()), HttpStatus.OK);
@@ -73,11 +86,16 @@ public class MovieController {
         return new ResponseEntity<String>("You have to buy a subscription for 150 rubles!", HttpStatus.FORBIDDEN);
     }
 
+
+    @ApiOperation(value = "${MovieController.buySub}")
     @RequestMapping(value = "buysub",
             method = RequestMethod.POST,
             produces = {MimeTypeUtils.APPLICATION_JSON_VALUE},
             headers = "Accept=application/json")
-    public ResponseEntity<String> buySub(Optional<String> login, Optional<Integer> sum){
+    public ResponseEntity<String> buySub(@ApiParam("login") Optional<String> login, @ApiParam("sum") Optional<Integer> sum){
+        if(!login.isPresent())
+            return new ResponseEntity<String>("Login is required!", HttpStatus.BAD_REQUEST);
+
         if(userService.getByLogin(login.get()).isSubed())
             return new ResponseEntity<String>("You already have a subscription! Refunded", HttpStatus.OK);
 
@@ -89,9 +107,5 @@ public class MovieController {
             return new ResponseEntity<String>("Enjoy the movies!", HttpStatus.OK);
         }
         return new ResponseEntity<String>("Insufficient funds", HttpStatus.OK);
-
     }
-
-
-
 }
