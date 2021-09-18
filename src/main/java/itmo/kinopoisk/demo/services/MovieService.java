@@ -2,7 +2,6 @@ package itmo.kinopoisk.demo.services;
 
 import itmo.kinopoisk.demo.entities.Movie;
 import itmo.kinopoisk.demo.repo.MovieRepo;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,10 +9,14 @@ import java.util.Optional;
 
 @Service
 public class MovieService {
-    @Autowired
-    private MovieRepo movieRepo;
+    private final MovieRepo movieRepo;
 
-    public List<Movie> getAllMovies(Optional<String> genre, Optional<Integer> year, Optional<String> country) {
+    public MovieService(MovieRepo movieRepo) {
+        this.movieRepo = movieRepo;
+    }
+
+    //not sure about 7if decision. hope you can help me
+    public List<Movie> getMoviesByParam(Optional<String> genre, Optional<Integer> year, Optional<String> country) {
         if (genre.isPresent() && year.isPresent() && country.isPresent())
             return movieRepo.findAllByCountryAndGenreAndYear(country.get(), genre.get(), year.get());
 
@@ -42,18 +45,21 @@ public class MovieService {
         return movieRepo.findById(id);
     }
 
-    public void changeRaitById(int id, double currRate) {
+    public void changeMovieRaitById(int id, double currRate) {
         Movie movie = movieRepo.findById(id);
+        double movieRate;
         if (currRate > movie.getRate())
-            movie.setRate(movie.getRate() + currRate / 100);
+            movieRate = movie.getRate() + currRate / 100;
         else
-            movie.setRate(movie.getRate() - currRate / 100);
+            movieRate = movie.getRate() - currRate / 100;
+
+        movie.setRate(movieRate);
         movieRepo.save(movie);
     }
 
-    public String getMovieDesc(int id){
+    public String getMovieDesc(int id) {
         Movie movie = movieRepo.findById(id);
-        return movie.getName() + ", "+ movie.getYear() + '\n' + movie.getDescription();
+        return movie.getName() + ", " + movie.getYear() + '\n' + movie.getDescription();
     }
 
 }

@@ -36,7 +36,7 @@ public class MovieController {
                                                         @ApiParam("year")    @RequestParam(value = "year") Optional<Integer> year,
                                                         @ApiParam("country") @RequestParam(value = "country") Optional<String> country) {
         try {
-            return new ResponseEntity<>(movieService.getAllMovies(genre, year, country), HttpStatus.OK);
+            return new ResponseEntity<>(movieService. getMoviesByParam(genre, year, country), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity("Something went wrong", HttpStatus.BAD_REQUEST);
         }
@@ -58,7 +58,7 @@ public class MovieController {
         if (currRate.get() > 10)
             return new ResponseEntity("Rate can't be more than 10", HttpStatus.BAD_REQUEST);
 
-        movieService.changeRaitById(movieId.get(), currRate.get());
+        movieService.changeMovieRaitById(movieId.get(), currRate.get());
 
         try {
             return new ResponseEntity<>(movieService.getMovieById(movieId.get()), HttpStatus.OK);
@@ -66,6 +66,8 @@ public class MovieController {
             return new ResponseEntity("Something went wrong", HttpStatus.BAD_REQUEST);
         }
     }
+
+
 
 
     @ApiOperation(value = "${MovieController.watchMovie}")
